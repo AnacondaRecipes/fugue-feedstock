@@ -11,25 +11,24 @@ source:
   sha256: a61c4763b32907c53dee4403dd42e026c97997c1209d9d479f96f9b71c5258a4
 
 build:
+  skip: true  # [py<37 or s390x]
   number: 0
-  noarch: python
-  script: {{ PYTHON }} -m pip install . -vv
+  script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation --ignore-installed -vvv
 
 requirements:
   host:
     - pip
-    - python >=3.7
+    - python
+    - setuptools
+    - wheel
   run:
+    - python
     - adagio >=0.2.4
-    # For fugue-sql-antlr 0.1.5
-    - antlr4-python3-runtime <4.12,>=4.11.1
-    - fugue-sql-antlr >=0.1.5
+    - fugue-sql-antlr >=0.1.6
     - jinja2
     - pandas >=1.2.0,<2
     - pyarrow >=0.15.1
-    - python >=3.7
     - qpd >=0.4.0
-    - sqlalchemy
     - sqlglot
     - triad >=0.8.4
 
@@ -42,11 +41,13 @@ test:
     - pip
 
 about:
-  home: http://github.com/fugue-project/fugue
+  home: https://github.com/fugue-project/fugue
   doc_url: https://fugue-tutorials.readthedocs.io/
+  dev_url: https://github.com/fugue-project/fugue
   summary: An abstraction layer for distributed computation
   license: Apache-2.0
-  license_file: LICENSE  # license file manually packaged.
+  license_family: Apache
+  license_file: LICENSE 
   description: |
     Fugue is a unified interface for distributed computing that lets
      users execute Python, pandas, and SQL code on Spark and Dask
@@ -57,7 +58,6 @@ about:
      using pandas wanting to take advantage of Spark or Dask with
      minimal effort, as well as big data practitioners finding testing
      code to be costly and slow would also find Fugue useful.
-
 
 extra:
   recipe-maintainers:
