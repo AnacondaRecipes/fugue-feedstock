@@ -1,0 +1,4 @@
+channels:
+    - https://staging.continuum.io/prefect/fs/triad-feedstock/pr2/f1ed263
+    - https://staging.continuum.io/prefect/fs/qpd-feedstock/pr3/db0d79e
+
