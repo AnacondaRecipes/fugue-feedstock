@@ -1,5 +1,5 @@
 {% set name = "fugue" %}
-{% set version = "0.8.3" %}
+{% set version = "0.8.7" %}
 
 
 package:
@@ -8,11 +8,12 @@ package:
 
 source:
   url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/fugue-{{ version }}.tar.gz
-  sha256: a61c4763b32907c53dee4403dd42e026c97997c1209d9d479f96f9b71c5258a4
+  sha256: 4c56946de46083778cdd6ec5b91ac5d37a847164c80790771edc6832bb9a260d
 
 build:
-  skip: true  # [py<37 or s390x]
   number: 0
+  # skip s390x because triad is not avaiable
+  skip: true  # [py<38 or s390x]
   script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation --ignore-installed -vvv
 
 requirements:
@@ -23,14 +24,13 @@ requirements:
     - wheel
   run:
     - python
+    - triad >=0.9.3
     - adagio >=0.2.4
+    # sql dependencies
+    - qpd >=0.4.4
     - fugue-sql-antlr >=0.1.6
-    - jinja2
-    - pandas >=1.2.0,<2
-    - pyarrow >=0.15.1
-    - qpd >=0.4.0
     - sqlglot
-    - triad >=0.8.4
+    - jinja2
 
 test:
   imports:
