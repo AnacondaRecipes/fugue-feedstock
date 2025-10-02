@@ -46,6 +46,8 @@ requirements:
 # assert t < 0.4
 # assert 0.7310379580012523 < 0.4
 {% set deselect_tests = "--deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %}
+# AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+{% set deselect_tests = deselect_tests + " --deselect=tests/fugue/dataframe/test_pandas_dataframe.py::test_as_array" %}  # [py>312]
 
 test:
   source_files:
@@ -73,8 +75,6 @@ test:
     - pip
     - pytest
     - python-duckdb >=0.5.0
-    # AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
-    - numpy <2
     - sqlglot
     - s3fs
     - matplotlib-base
