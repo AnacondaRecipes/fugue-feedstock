@@ -32,7 +32,8 @@ requirements:
     - dask-core >=2023.5.0  # [py<311]
     - dask-core >=2024.4.0  # [py>=311]
     - pyarrow >=7.0.0
-    - pandas >=2.0.2,<2.2
+    # The main channel doesn't have the pandas py313 package for the following range
+    - pandas >=2.0.2,<2.2  # [py<313]
     - ray >=2.5.0
     - python-duckdb >=0.5.0
     - ipython >=7.10.0
