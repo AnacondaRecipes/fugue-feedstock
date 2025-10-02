@@ -1,19 +1,17 @@
 {% set name = "fugue" %}
-{% set version = "0.8.7" %}
-
+{% set version = "0.9.1" %}
 
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/fugue-{{ version }}.tar.gz
-  sha256: 4c56946de46083778cdd6ec5b91ac5d37a847164c80790771edc6832bb9a260d
+  url: https://github.com/fugue-project/{{ name }}/archive/refs/tags/{{ version }}.tar.gz
+  sha256: 49890f3186f655268a7069f986b7065a9040542a6b4a39dc7faf0f69d9cdc628
 
 build:
   number: 0
-  # skip s390x because triad is not avaiable
-  skip: true  # [py<38 or s390x]
+  skip: true  # [py<38]
   script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation --ignore-installed -vvv
 
 requirements:
@@ -24,40 +22,85 @@ requirements:
     - wheel
   run:
     - python
-    - triad >=0.9.3
+    - triad >=0.9.7
     - adagio >=0.2.4
+  run_constrained:
     # sql dependencies
     - qpd >=0.4.4
-    - fugue-sql-antlr >=0.1.6
-    - sqlglot
-    - jinja2
+    - fugue-sql-antlr >=0.2.0
+    - pyspark >=3.1.1
+    - dask-core >=2023.5.0  # [py<311]
+    - dask-core >=2024.4.0  # [py>=311]
+    - pyarrow >=7.0.0
+    # The main channel doesn't have the pandas py313 package for the following range
+    - pandas >=2.0.2,<2.2  # [py<313]
+    - ray >=2.5.0
+    - python-duckdb >=0.5.0
+    - ipython >=7.10.0
+    - qpd >=0.4.4
+
+# assert self.context.name.startswith("pandas")
+# assert self.engine.conf["fugue.test.dummy"] == "dummy"
+{% set tests_to_skip = "test_with_backend_with_context[pandas]" %}
+{% set tests_to_skip = tests_to_skip + " or test_properties[pandas]" %}
+# assert t < 0.4
+# assert 0.7310379580012523 < 0.4
+{% set deselect_tests = "--deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %}
+# AttributeError: `np.float_` was removed in the NumPy 2.0 release. Use `np.float64` instead.
+{% set deselect_tests = deselect_tests + " --deselect=tests/fugue/dataframe/test_pandas_dataframe.py::test_as_array" %}  # [py>312]
 
 test:
+  source_files:
+    - tests
   imports:
     - fugue
-  commands:
-    - pip check
+    - fugue._utils
+    - fugue.api
+    - fugue.bag
+    - fugue.collections
+    - fugue.column
+    - fugue.constants
+    - fugue.dataframe
+    - fugue.dataset
+    - fugue.dev
+    - fugue.exceptions
+    - fugue.execution
+    - fugue.extensions
+    - fugue.plugins
+    - fugue.registry
+    - fugue.rpc
+    - fugue.sql
+    - fugue.workflow
   requires:
     - pip
+    - pytest
+    - python-duckdb >=0.5.0
+    - sqlglot
+    - s3fs
+    - matplotlib-base
+  commands:
+    - pip check
+    - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
+    - pytest -v tests/fugue -k "not({{ tests_to_skip }})" {{ deselect_tests }}
 
 about:
   home: https://github.com/fugue-project/fugue
-  doc_url: https://fugue-tutorials.readthedocs.io/
-  dev_url: https://github.com/fugue-project/fugue
   summary: An abstraction layer for distributed computation
   license: Apache-2.0
   license_family: Apache
-  license_file: LICENSE 
+  license_file: LICENSE
   description: |
     Fugue is a unified interface for distributed computing that lets
-     users execute Python, pandas, and SQL code on Spark and Dask
-     without rewrites. It is meant for data scientists/analysts who want
-     to focus on defining logic rather than worrying about execution. It
-     is also suitable for SQL users wanting to use SQL to define
-     end-to-end workflows in pandas, Spark, and Dask. Data scientists
-     using pandas wanting to take advantage of Spark or Dask with
-     minimal effort, as well as big data practitioners finding testing
-     code to be costly and slow would also find Fugue useful.
+    users execute Python, pandas, and SQL code on Spark and Dask
+    without rewrites. It is meant for data scientists/analysts who want
+    to focus on defining logic rather than worrying about execution. It
+    is also suitable for SQL users wanting to use SQL to define
+    end-to-end workflows in pandas, Spark, and Dask. Data scientists
+    using pandas wanting to take advantage of Spark or Dask with
+    minimal effort, as well as big data practitioners finding testing
+    code to be costly and slow would also find Fugue useful.
+  doc_url: https://fugue-tutorials.readthedocs.io
+  dev_url: https://github.com/fugue-project/fugue
 
 extra:
   recipe-maintainers:
