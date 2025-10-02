@@ -33,7 +33,7 @@ requirements:
     - dask-core >=2024.4.0  # [py>=311]
     - pyarrow >=7.0.0
     # The main channel doesn't have the pandas py313 package for the following range
-    - pandas >=2.0.2,<2.2  # [py<313]
+    - pandas >=2.0.2,<2.2
     - ray >=2.5.0
     - python-duckdb >=0.5.0
     - ipython >=7.10.0
@@ -41,8 +41,8 @@ requirements:
 
 # assert self.context.name.startswith("pandas")
 # assert self.engine.conf["fugue.test.dummy"] == "dummy"
-{% set deselect_tests = " --deselect=tests/fugue/test/test_plugins.py::test_with_backend_with_context[pandas]" %}
-{% set deselect_tests = deselect_tests + " --deselect=tests/fugue/test/test_plugins.py::TestTestSuite::test_properties[pandas]" %}
+{% set tests_to_skip = "test_with_backend_with_context[pandas]" %}
+{% set tests_to_skip = tests_to_skip + " or test_properties[pandas]" %}
 
 test:
   source_files:
@@ -76,7 +76,7 @@ test:
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    - pytest -v tests/fugue {{ deselect_tests }}
+    - pytest -v tests/fugue -k "not({{ tests_to_skip }})"
 
 about:
   home: https://github.com/fugue-project/fugue
