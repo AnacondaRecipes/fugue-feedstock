@@ -1,5 +1,5 @@
 {% set name = "fugue" %}
-{% set version = "0.9.1" %}
+{% set version = "0.9.4" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/fugue-project/{{ name }}/archive/refs/tags/{{ version }}.tar.gz
-  sha256: 49890f3186f655268a7069f986b7065a9040542a6b4a39dc7faf0f69d9cdc628
+  sha256: 31e3d33e71d5e583d1b602759534ffb4a4221faa26271e0044629251c032e32a
 
 build:
   number: 0
@@ -22,22 +22,20 @@ requirements:
     - wheel
   run:
     - python
-    - triad >=0.9.7
-    - adagio >=0.2.4
+    - triad >=1.0.0
+    - adagio >=0.2.6
   run_constrained:
     # sql dependencies
     - qpd >=0.4.4
     - fugue-sql-antlr >=0.2.0
+    - sqlglot <28.0.0
     - pyspark >=3.1.1
-    - dask-core >=2023.5.0  # [py<311]
-    - dask-core >=2024.4.0  # [py>=311]
+    - dask-core >=2024.4.0
     - pyarrow >=7.0.0
-    # The main channel doesn't have the pandas py313 package for the following range
-    - pandas >=2.0.2,<2.2  # [py<313]
-    - ray >=2.5.0
+    - pandas >=2.0.2
+    - ray >=2.30
     - python-duckdb >=0.5.0
     - ipython >=7.10.0
-    - qpd >=0.4.4
 
 # assert self.context.name.startswith("pandas")
 # assert self.engine.conf["fugue.test.dummy"] == "dummy"
@@ -78,6 +76,7 @@ test:
     - sqlglot
     - s3fs
     - matplotlib-base
+    - cloudpickle
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
