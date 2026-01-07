@@ -39,11 +39,11 @@ requirements:
 
 # assert self.context.name.startswith("pandas")
 # assert self.engine.conf["fugue.test.dummy"] == "dummy"
-{% set tests_to_skip = "test_with_backend_with_context[pandas]" %}
-{% set tests_to_skip = tests_to_skip + " or test_properties[pandas]" %}
+{% set tests_to_skip = "test_with_backend_with_context[pandas]" %} # [py<314]
+{% set tests_to_skip = tests_to_skip + " or test_properties[pandas]" %} # [py<314]
 # assert t < 0.4
 # assert 0.7310379580012523 < 0.4
-{% set deselect_tests = "--deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %}
+{% set deselect_tests = "--deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %} # [py<314]
 
 test:
   source_files:
@@ -69,16 +69,17 @@ test:
     - fugue.workflow
   requires:
     - pip
-    - pytest
-    - python-duckdb >=0.5.0
-    - sqlglot
-    - s3fs
-    - matplotlib-base
-    - cloudpickle
+    - pytest  # [py<314]
+    - python-duckdb >=0.5.0  # [py<314]
+    - sqlglot  # [py<314]
+    - s3fs  # [py<314]
+    - matplotlib-base  # [py<314]
+    - cloudpickle  # [py<314]
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    - pytest -v tests/fugue -k "not({{ tests_to_skip }})" {{ deselect_tests }}
+    # Missing s3fs for py3.14
+    - pytest -v tests/fugue -k "not({{ tests_to_skip }})" {{ deselect_tests }}  # [py<314]
 
 about:
   home: https://github.com/fugue-project/fugue
