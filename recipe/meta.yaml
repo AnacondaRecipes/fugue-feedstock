@@ -47,6 +47,9 @@ requirements:
     - ipython >=7.10.0
 
 test:
+  source_files:
+    - tests
+    - pyproject.toml
   imports:
     - fugue
     - fugue._utils
@@ -68,11 +71,20 @@ test:
     - fugue.workflow
   requires:
     - pip
+    - pytest
+    - pytest-cov
+    - fugue-sql-antlr >=0.2.4
+    - python-duckdb >=0.5.0
+    - sqlglot <28  # [py<315]
+    - s3fs
+    - matplotlib-base
+    - cloudpickle
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    # pytest disabled: every fugue test imports triad, which is unsolvable until triad >=1.0.4 is on pkgs/main
-    # - pytest -vv tests/fugue
+    # sqlglot <28 has no py3.15 build on pkgs/main, so these 4 SQL tests cannot import it
+    - pytest -vv tests/fugue  # [py<315]
+    - pytest -vv tests/fugue --deselect=tests/fugue/sql/test_workflow.py::test_fsql --deselect=tests/fugue/sql/test_workflow.py::test_conf_override --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df  # [py>=315]
 
 about:
   home: https://github.com/fugue-project/fugue
