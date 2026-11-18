@@ -46,6 +46,11 @@ requirements:
     # notebook extra
     - ipython >=7.10.0
 
+{% set deselected_tests = " --deselect=tests/fugue/sql/test_workflow.py::test_fsql" %}
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_conf_override" %}
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql" %}
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df" %}
+
 test:
   source_files:
     - tests
@@ -82,9 +87,9 @@ test:
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    # sqlglot <28 has no py3.15 build on pkgs/main, so these 4 SQL tests cannot import it
     - pytest -vv tests/fugue  # [py<315]
-    - pytest -vv tests/fugue --deselect=tests/fugue/sql/test_workflow.py::test_fsql --deselect=tests/fugue/sql/test_workflow.py::test_conf_override --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df  # [py>=315]
+    # sqlglot <28 has no py3.15 build on pkgs/main, so these 4 SQL tests cannot import it
+    - pytest -vv tests/fugue{{ deselected_tests }}  # [py>=315]
 
 about:
   home: https://github.com/fugue-project/fugue
