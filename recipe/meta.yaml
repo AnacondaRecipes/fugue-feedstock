@@ -88,11 +88,11 @@ test:
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    # sqlglot <28 is missing for win-arm64 and py3.15; the parallel test's timing assertion is flaky off linux
-    - pytest -vv tests/fugue  # [linux and py<315]
-    - pytest -vv tests/fugue{{ sql_deselected_tests }}  # [linux and py>=315]
-    - pytest -vv tests/fugue{{ timing_deselected_tests }}  # [not linux and py<315 and not (win and arm64)]
-    - pytest -vv tests/fugue{{ timing_deselected_tests }}{{ sql_deselected_tests }}  # [not linux and (py>=315 or (win and arm64))]
+    # sqlglot <28 does not exist on pkgs/main for win-arm64 or py3.15; test_parallel's timing assertion is flaky on osx CI
+    - pytest -vv tests/fugue  # [py<315 and not (win and arm64) and not osx]
+    - pytest -vv tests/fugue{{ sql_deselected_tests }}  # [(py>=315 or (win and arm64)) and not osx]
+    - pytest -vv tests/fugue{{ timing_deselected_tests }}  # [osx and py<315]
+    - pytest -vv tests/fugue{{ timing_deselected_tests }}{{ sql_deselected_tests }}  # [osx and (py>=315 or (win and arm64))]
 
 about:
   home: https://github.com/fugue-project/fugue
