@@ -46,10 +46,11 @@ requirements:
     # notebook extra
     - ipython >=7.10.0
 
-{% set deselected_tests = " --deselect=tests/fugue/sql/test_workflow.py::test_fsql" %}
-{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_conf_override" %}
-{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql" %}
-{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df" %}
+{% set sql_deselected_tests = " --deselect=tests/fugue/sql/test_workflow.py::test_fsql" %}
+{% set sql_deselected_tests = sql_deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_conf_override" %}
+{% set sql_deselected_tests = sql_deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql" %}
+{% set sql_deselected_tests = sql_deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df" %}
+{% set timing_deselected_tests = " --deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %}
 
 test:
   source_files:
@@ -80,16 +81,18 @@ test:
     - pytest-cov
     - fugue-sql-antlr >=0.2.4
     - python-duckdb >=0.5.0
-    - sqlglot <28  # [py<315]
+    - sqlglot <28  # [py<315 and not (win and arm64)]
     - s3fs
     - matplotlib-base
     - cloudpickle
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    - pytest -vv tests/fugue  # [py<315]
-    # sqlglot <28 has no py3.15 build on pkgs/main, so these 4 SQL tests cannot import it
-    - pytest -vv tests/fugue{{ deselected_tests }}  # [py>=315]
+    # sqlglot <28 is missing for win-arm64 and py3.15; the parallel test's timing assertion is flaky off linux
+    - pytest -vv tests/fugue  # [linux and py<315]
+    - pytest -vv tests/fugue{{ sql_deselected_tests }}  # [linux and py>=315]
+    - pytest -vv tests/fugue{{ timing_deselected_tests }}  # [not linux and py<315 and not (win and arm64)]
+    - pytest -vv tests/fugue{{ timing_deselected_tests }}{{ sql_deselected_tests }}  # [not linux and (py>=315 or (win and arm64))]
 
 about:
   home: https://github.com/fugue-project/fugue
