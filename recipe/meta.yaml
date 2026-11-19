@@ -1,53 +1,64 @@
 {% set name = "fugue" %}
-{% set version = "0.9.4" %}
+{% set version = "0.9.9" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name }}
   version: {{ version }}
 
 source:
-  url: https://github.com/fugue-project/{{ name }}/archive/refs/tags/{{ version }}.tar.gz
-  sha256: 31e3d33e71d5e583d1b602759534ffb4a4221faa26271e0044629251c032e32a
+  # upstream tags are "v"-prefixed as of 0.9.7
+  url: https://github.com/fugue-project/{{ name }}/archive/refs/tags/v{{ version }}.tar.gz
+  sha256: 97daef2bd0ae0610d60a9824e64000820020a93d591dea13914daf2d69a78c0b
 
 build:
   number: 0
-  skip: true  # [py<38]
+  skip: true  # [py<311]
   script: {{ PYTHON }} -m pip install . --no-deps --no-build-isolation --ignore-installed -vvv
 
 requirements:
   host:
     - pip
     - python
-    - setuptools
+    - setuptools >=61.0
     - wheel
   run:
     - python
-    - triad >=1.0.0
+    - triad >=1.0.4
     - adagio >=0.2.6
+    - packaging
+    - pandas  # [py<315]
+    - pandas >=3  # [py>=315]
   run_constrained:
-    # sql dependencies
-    - qpd >=0.4.4
-    - fugue-sql-antlr >=0.2.0
-    - sqlglot <28.0.0
-    - pyspark >=3.1.1
-    - dask-core >=2024.4.0
-    - pyarrow >=7.0.0
-    - pandas >=2.0.2
-    - ray >=2.30
+    # bounded deps from upstream extras; unversioned extra deps are no-ops here
+    # sql / duckdb / ibis extras
+    - fugue-sql-antlr >=0.2.4
+    - sqlglot <28
     - python-duckdb >=0.5.0
+    # spark extra
+    - pyspark >=3.5  # [py<312]
+    - pyspark >=4.0  # [py>=312]
+    - zstandard >=0.25.0
+    # dask extra (pandas >=2.0.2 is feature-only; core allows unversioned pandas)
+    - dask-core >=2025.12.0
+    - pyarrow >=7.0.0
+    # ray extra (upstream declares no ray extra for python 3.14+)
+    - ray >=2.30.0  # [py<314]
+    # notebook extra
     - ipython >=7.10.0
 
-# assert self.context.name.startswith("pandas")
-# assert self.engine.conf["fugue.test.dummy"] == "dummy"
-{% set tests_to_skip = "test_with_backend_with_context[pandas]" %} # [py<314]
-{% set tests_to_skip = tests_to_skip + " or test_properties[pandas]" %} # [py<314]
-# assert t < 0.4
-# assert 0.7310379580012523 < 0.4
-{% set deselect_tests = "--deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %} # [py<314]
+# sqlglot <28 is missing from pkgs/main for py3.15 and win-arm64
+{% set deselected_tests = "" %}
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_fsql" %}  # [py>=315 or (win and arm64)]
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_conf_override" %}  # [py>=315 or (win and arm64)]
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql" %}  # [py>=315 or (win and arm64)]
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df" %}  # [py>=315 or (win and arm64)]
+# test_parallel's timing assertion is flaky on osx CI
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %}  # [osx]
 
 test:
   source_files:
     - tests
+    - pyproject.toml
   imports:
     - fugue
     - fugue._utils
@@ -69,17 +80,18 @@ test:
     - fugue.workflow
   requires:
     - pip
-    - pytest  # [py<314]
-    - python-duckdb >=0.5.0  # [py<314]
-    - sqlglot  # [py<314]
-    - s3fs  # [py<314]
-    - matplotlib-base  # [py<314]
-    - cloudpickle  # [py<314]
+    - pytest
+    - pytest-cov
+    - fugue-sql-antlr >=0.2.4
+    - python-duckdb >=0.5.0
+    - sqlglot <28  # [py<315 and not (win and arm64)]
+    - s3fs
+    - matplotlib-base
+    - cloudpickle
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    # Missing s3fs for py3.14
-    - pytest -v tests/fugue -k "not({{ tests_to_skip }})" {{ deselect_tests }}  # [py<314]
+    - pytest -vv tests/fugue{{ deselected_tests }}
 
 about:
   home: https://github.com/fugue-project/fugue
