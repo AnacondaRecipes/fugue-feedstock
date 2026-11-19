@@ -46,11 +46,14 @@ requirements:
     # notebook extra
     - ipython >=7.10.0
 
-{% set sql_deselected_tests = " --deselect=tests/fugue/sql/test_workflow.py::test_fsql" %}
-{% set sql_deselected_tests = sql_deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_conf_override" %}
-{% set sql_deselected_tests = sql_deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql" %}
-{% set sql_deselected_tests = sql_deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df" %}
-{% set timing_deselected_tests = " --deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %}
+# sqlglot <28 is missing from pkgs/main for py3.15 and win-arm64
+{% set deselected_tests = "" %}
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_fsql" %}  # [py>=315 or (win and arm64)]
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_conf_override" %}  # [py>=315 or (win and arm64)]
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_jinja_keyword_in_sql" %}  # [py>=315 or (win and arm64)]
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/sql/test_workflow.py::test_use_soecial_df" %}  # [py>=315 or (win and arm64)]
+# test_parallel's timing assertion is flaky on osx CI
+{% set deselected_tests = deselected_tests + " --deselect=tests/fugue/workflow/test_workflow_parallel.py::test_parallel" %}  # [osx]
 
 test:
   source_files:
@@ -88,11 +91,7 @@ test:
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
-    # sqlglot <28 does not exist on pkgs/main for win-arm64 or py3.15; test_parallel's timing assertion is flaky on osx CI
-    - pytest -vv tests/fugue  # [py<315 and not (win and arm64) and not osx]
-    - pytest -vv tests/fugue{{ sql_deselected_tests }}  # [(py>=315 or (win and arm64)) and not osx]
-    - pytest -vv tests/fugue{{ timing_deselected_tests }}  # [osx and py<315]
-    - pytest -vv tests/fugue{{ timing_deselected_tests }}{{ sql_deselected_tests }}  # [osx and (py>=315 or (win and arm64))]
+    - pytest -vv tests/fugue{{ deselected_tests }}
 
 about:
   home: https://github.com/fugue-project/fugue
